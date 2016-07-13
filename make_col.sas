@@ -2,7 +2,7 @@
 			,breakchars=%str( -/:),startNum=1);  
 	
 	
-*V. 2.4.1mlite;
+*V. 2.4.2mlite;
 %*breaks the text into columns with a fixed length;
 
 	%local i index maxOfCol maxRowLength allVars;
@@ -27,6 +27,7 @@
 
 		call missing(of &allVars.);
 
+		&VARIN. = compbl(&VARIN.);
 		%linebreaks(&VARIN.,&DEFLEN.,&SEP.,breakchars=&breakchars.);
 
 		%do i = 1 %to &maxOfCol.;
@@ -90,7 +91,7 @@ breakchars - char for break text;
 startNum - number starting index variable;
 ********************/
 
-/************* my change log
+/************* my chang log
 2.4:
 *Now assigned to the variable length of parameter >>>deflen;
 *Added genVarList macros to generate variable list;
