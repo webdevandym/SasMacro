@@ -91,11 +91,13 @@ breakchars - char for break text;
 startNum - number starting index variable;
 ********************/
 
-/************* my chang log
+/************* my change log
 2.4:
 *Now assigned to the variable length of parameter >>>deflen;
 *Added genVarList macros to generate variable list;
 *Change text separation algorithm (%genVarList macro);
 2.4.1
 *Now the output variables are overwritten before treatment;
+2.4.2
+*before %linebreak, input variable, is compbl.
 *************/
