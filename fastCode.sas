@@ -2,7 +2,7 @@
 
 	%local word i invar outvar fmt brakets algPart;
 
-	%setDefOption_fastCode;
+	%setDefOption_fastCode
 
 	%*search algorithm for the point of insertion of variables; 
 	%let algPart = %qscan(&alg,1,%str(%)));
@@ -18,7 +18,7 @@
 		%let outvar = %scan(&word,1,&del.);
 		%let invar = %scan(&word.,2,&del.);
 		%let fmt = %scan(&word,3,&del.);
-		%if &autoDom. %then %let outvar = &domain.&outvar.;;
+		%if &autoDom. %then %let outvar = &domain.&outvar.;
 
 		%if %index(&alg.,input) or %index(&alg.,put) %then %do;
 
@@ -28,7 +28,7 @@
 				^("%substr(&fmt.,%length(&fmt.)-2)" # (" -l" " -r" " -c" " -L" " -R" " -C"))
 					%then %let fmt = &fmt..;
 
-			&outvar = &algPart&invar.,&fmt.&brakets;
+			&outvar = &algPart&invar.,&fmt.&brakets
 
 		%end; %else %if %index(&alg.,none) or %bquote(&alg.) = %then &outvar = &invar.;
 						%else &outvar = &algPart&invar.&brakets;;
@@ -41,12 +41,12 @@
 	%*set informat-format option;
 	%if &informat = %then 
 		%if %symexist(g_fastCode_informat) %then %let informat = &g_fastCode_informat;
-			%else %let informat = &true.;;
+			%else %let informat = &true.;
 	
 	%*auto set domain prefix;
 	%if &autoDom = %then 
 		%if %symexist(g_fastCode_autoDom) %then %let autoDom = &g_fastCode_autoDom;
-			%else %let autoDom = &false.;;
+			%else %let autoDom = &false.;
 
 %mend;
 

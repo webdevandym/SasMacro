@@ -2,12 +2,12 @@
 					datevar=&domain.DTC,tagsort=&false.,time=,operDT=,operDA=);
 	%local dateFormat;
 
-	%setDefOption_getblflag;
+	%setDefOption_getblflag
 
-	%sort(&inds., &sortvar. &datevar.,tagsort=&tagsort.);
+	%sort(&inds., &sortvar. &datevar.,tagsort=&tagsort.)
 
 	%if &time. %then %let dateFormat = is8601dt;
-		%else %let dateFormat = is8601da;;
+		%else %let dateFormat = is8601da;
 
 	data _getbl_temp;
 		merge &inds.(in = in1)
@@ -18,11 +18,11 @@
 		if ^missing(RFSTDTC) and ^missing(&domain.DTC) and ^missing(&domain.ORRES) then	do;
 			if index(&datevar.,"T") then do;
 
-				%getBlPreFlag(&datevar.,&dateFormat.,logOper=&operDT.);
+				%getBlPreFlag(&datevar.,&dateFormat.,logOper=&operDT.)
 
 			end; else do;
 
-				%getBlPreFlag(&datevar.,is8601da,logOper=&operDA.);
+				%getBlPreFlag(&datevar.,is8601da,logOper=&operDA.)
 
 			end;
 		end;
@@ -45,9 +45,9 @@
 
 %macro getBlPreFlag(date,format,logOper=lt);
 	
-	%if %substr(&&format,%length(&&format.),1) ^= . %then %let format = &format..;;
+	%if %substr(&&format,%length(&&format.),1) ^= . %then %let format = &format..;
 	%local procVar DMVar;
-	%localvars(procVar DMVar);
+	%localvars(procVar DMVar)
 	
 	&procVar. = input(&date.,&format.);
 	&DMVar. = input(RFSTDTC,&format.);
@@ -61,18 +61,18 @@
 	%*use datetime or date;
 	%if &time = %then 
 		%if %symexist(g_getblflag_time) %then %let time = &g_getblflag_time.;
-			%else %let time = &true.;;
+			%else %let time = &true.;
 	
 	%*set datetime operator;
 	%if &operDT = %then 
 		%if %symexist(g_getblflag_operDT) %then %let operDT = &g_getblflag_operDT.;
 			%else %if &time. %then %let operDT = lt;
-						%else %let operDT = le;;
+						%else %let operDT = le;
 
 	%*set date operator;
 	%if &operDA = %then 
 		%if %symexist(g_getblflag_operDA) %then %let operDA = &g_getblflag_operDA.;
-			%else %let operDA = le;;
+			%else %let operDA = le;
 
 %mend;
 /****ADD missing time
