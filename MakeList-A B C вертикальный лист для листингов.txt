@@ -1,0 +1,29 @@
+
+%macro makeList(letter,var,fmt=,catx=,sep=%nrstr(&rtf_par.));
+
+	
+	%local word i tmp_var tmp_fmt &var listVars;
+	%localvars(&var,length=200);
+
+	%do %while(%get_word(&letter, i, word));
+		
+		
+		%let tmp_var = %scan(&var.,&i.," ");
+		&&&tmp_var. = &tmp_var.;
+		
+		%if %inlist(&tmp_var,&fmt) or "&tmp_var" = "aeacn" %then  %do;
+
+			%if "&tmp_var" = "aeacn"  %then %let tmp_fmt = $acn.;
+				%else %let tmp_fmt = $&tmp_var..;;
+			
+			&&&tmp_var = ifc(^missing(&&&tmp_var),"&word.: " || strip(put(&&&tmp_var,&tmp_fmt)),"");
+
+		%end; %else &&&tmp_var = ifc(^missing(&&&tmp_var),"&word.: " || strip(&&&tmp_var),"");;
+
+		%let listVars  = &listVars &&&tmp_var;
+
+	%end;
+
+	%if %bquote(&catx) ^= %then &catx = catx("%unquote(&sep.)",of &catx &listVars);;
+
+%mend;
