@@ -1,27 +1,32 @@
 %macro ColorMe_FDK(invars=&g_key_FDK. &g_compare_FDK.,keyVars=&g_key_FDK.,indent=,fIndent=,decAlg=,
 	putColor=BLUE,skipColor=);
 
-	%local i varin CountKey;
+%*Initialization local macro-vars, and generate amount of elements;
+	%local i varin CountKey FlagColumnsName;
 	%if &skipColor. = %then %let skipColor = %bquote(__);
 	%if &keyVars. ^= %then %let CountKey = %sysfunc(countw(&keyVars.));
-	
+
+%* Test _row_ and painting;
 	define flag_all_FDK / display noprint ;	
 	 compute flag_all_FDK;
  		  if (flag_all_FDK="Y") then call
 				define(_row_, 'style', "style=[color=&putColor.]" );
   	 endcomp;
 
-%*test all _row_ and _col_;
-	%do %while(%get_word(&invars., i, varin));	 	
+%* Test all _col_ for painting;
+	%do %while(%get_word(&invars., i, varin));	
+
+		%let FlagColumnsName = %scan(&g_flagVars_FDK.,%eval(&i.-&CountKey.+1)," ");
+
 		column rtf_&varin._StyleCol;
   		define rtf_&varin._StyleCol / computed noprint;
 		%if &i. > &CountKey. %then 
-			define flag_col&i._FDK / display noprint;;
+			define &FlagColumnsName. / display noprint;;
 
 		compute rtf_&varin._StyleCol;
 			%getStyle_FDK; 	 
 			%if &i. > &CountKey. %then %do;
-				if (flag_col&i._FDK="Y") then allStyle_FDK = catx(" ",color_FDK,style_FDK);
+				if (&FlagColumnsName.="Y") then allStyle_FDK = catx(" ",color_FDK,style_FDK);
 					else %end; allStyle_FDK = strip(style_FDK); 
 			if ^missing(allStyle_FDK) then call define("&varin.", 'style', 'style=[' !! strip(allStyle_FDK) !!']' );
    		endcomp;
@@ -31,7 +36,8 @@
 
 %macro getStyle_FDK(index=&i.,skipIt=&skipColor.,useColor=&putColor.,fi=&&fIndent.,li=&&Indent.,dec=&&decAlg.,
 	useVar=&Varin.);
-%*create indent;
+
+%*create indent, and skip empty value or variable-value;
 		length style_FDK color_FDK allStyle_FDK $200;
 		style_FDK = '';
 		color_FDK ='';
@@ -41,8 +47,6 @@
 		%let vfindent = %sysfunc(prxchange(%str(s/\.(?!\d)//),-1,%scan(&&fi,&index," ")));
 		%let vindent = %sysfunc(prxchange(%str(s/\.(?!\d)//),-1,%scan(&&li,&index," ")));
 		%let vdec = %sysfunc(prxchange(%str(s/\.(?!\d)//),-1,%scan(&&dec,&index," ")));
-
-		%put &vfindent. &vindent &vdec &index;
 
 		%if %bquote(&vfindent.) ^= %then %do;
 			if ^missing(&vfindent.) then do;

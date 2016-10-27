@@ -3,14 +3,16 @@
 
 %*Initialization global and local macro-vars;
 	%global g_flagVars_FDK g_key_FDK g_compare_FDK;
-	%local varin i new_compare new_key FullName ColNum base_compare newIndex CountVars zeroCol allVars_FDK;
+	%local varin i new_compare base_compare new_key FullName ColNum newIndex newIndex2 
+		CountVarsOfKey allVars_FDK;
+
 %*Set value to macro-vars;
 	%let g_key_FDK = &key;
 	%let g_compare_FDK = &compare;
 	%let g_flagVars_FDK = ; 
 	%let allVars_FDK = &key &compare;
 
-	%if &key. ^= %then %let CountVars = %sysfunc(countw(&key));
+	%if &key. ^= %then %let CountVarsOfKey = %sysfunc(countw(&key));
 		%else %do; %put WARNING: FindDiffKits macro -> Key is empty!!!; %return; %end;
 
 %*rename input variable,clone and delete special RTF  symbol;
@@ -23,8 +25,9 @@
 										%end; %else %do;
 												columns&i. = col&j._compare
 												%let new_compare = &new_compare col&j._compare;
-												%if %scan(&allVars_FDK,%eval(&i+1)," ") ^= or ^&specSubjProfile. %then
-													%let base_compare = &base_compare col&i.;
+												%if &specSubjProfile. %then
+													%let base_compare = &base_compare col%eval(&i.-1);
+												%else %let base_compare = &base_compare col&i.;
 											%end;
 							 %end;));
 		%put &base_compare.;
@@ -42,7 +45,7 @@
 		%end;
 		drop &allVars_FDK.;
 	run;
-	
+	%put &ColNum.;
 %*get filename auto or static;
 	%if %bquote(&specFileName.) = %then %do;
 		data title;
@@ -60,11 +63,11 @@
 	%if &specSubjProfile. %then %do;
 		%sort(_cloned_&inds.,&new_key.);
 		data _qc_FDK;
-				set _qc_FDK;
-				temp+1;
-				col0=strip(put(temp,best.));
-				drop temp;
-			run;
+			set _qc_FDK;
+			temp+1;
+			col0=strip(put(temp,best.));
+			drop temp;
+		run;
 	%end; %else %do;
 			%sort(_cloned_&inds.,&new_key. &new_compare.);
 			%sort(_qc_FDK, &new_key. &base_compare.);
@@ -73,7 +76,7 @@
 				set _cloned_&inds.;
 				by &new_key.;
 
-				if first.col&CountVars. then seq=.;
+				if first.col&CountVarsOfKey. then seq=.;
 				seq +1;
 			run;
 			
@@ -81,7 +84,7 @@
 				set _qc_FDK;
 				by &new_key.;
 
-				if first.col&CountVars. then seq=.;
+				if first.col&CountVarsOfKey. then seq=.;
 				seq +1;
 			run;
 		%end;
@@ -107,9 +110,17 @@
 			%end;
 		end; else if in1*in2 then do;
 				%let i = 0;
-				%do %while(%get_word(&base_compare, i, varin));
-					%let newIndex = %eval(&i. + &CountVars.);
-					if &varin. ^= &varin._compare and ^missing (orig_col&newIndex.) then
+				%do %while(%get_word(&base_compare, i, varin));	
+	
+					%if ^&specSubjProfile. %then %do;
+						%let newIndex = %eval(&i. + &CountVarsOfKey.);
+						%let newIndex2 = &newIndex.;
+					%end; %else %do;
+								%let newIndex = &i.;
+								%let newIndex2 = %eval(&i. + &CountVarsOfKey.);
+							%end;
+
+					if &varin. ^= &varin._compare and ^missing (orig_col&newIndex2.) then
 						%if &algorithm = 1 %then 
 							orig_col&newIndex. = "(*ESC*)R'\chshdng0\chcbpat0\cf&color. '"!!orig_col&newIndex.;
 						%else %do;
