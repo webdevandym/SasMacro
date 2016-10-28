@@ -47,7 +47,7 @@
 	 		data _null_; /*checking variables consoles*/
 				%if ^%index(&vlist.,&VARIN.) %then %let PREFVAR = &FALSE;
 			run;
-
+ 
 		%end;
 
 		/*%put &result;*/
