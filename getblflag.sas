@@ -1,5 +1,5 @@
 %macro getblflag(inds=&domain._ALL,out=&domain,sortvar=USUBJID &domain.CAT &domain.TESTCD,
-					datevar=&domain.DTC,tagsort=&false.,time=,operDT=,operDA=);
+					datevar=&domain.DTC,resultvar=&domain.ORRES, tagsort=&false.,time=,operDT=,operDA=);
 	%local dateFormat;
 
 	%setDefOption_getblflag
@@ -15,7 +15,7 @@
 		by USUBJID;
 		if in1*inDM;
 			
-		if ^missing(RFSTDTC) and ^missing(&domain.DTC) and ^missing(&domain.ORRES) then	do;
+		if ^missing(RFSTDTC) and ^missing(&domain.DTC) and ^missing(&resultvar.) then	do;
 			if index(&datevar.,"T") then do;
 
 				%getBlPreFlag(&datevar.,&dateFormat.,logOper=&operDT.)
