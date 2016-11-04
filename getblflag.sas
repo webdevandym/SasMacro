@@ -1,21 +1,33 @@
-%macro getblflag(inds=&domain._ALL,out=&domain,sortvar=USUBJID &domain.CAT &domain.TESTCD,
-					datevar=&domain.DTC,resultvar=&domain.ORRES, tagsort=&false.,time=,operDT=,operDA=);
-	%local dateFormat;
+%macro getblflag2(inds=&domain._ALL,out=&domain,sortVar=USUBJID &domain.CAT &domain.TESTCD,
+					dateVar=&domain.DTC,resultVar=&domain.ORRES,ReferenceDate=RFSTDTC,
+					tagsort=&false.,time=,operDT=,operDA=,additionSort=);
+
+	%local dateFormat MergeSubjectDS PreffixOfVar;
+	%let PreffixOfVar = &domain.;
 
 	%setDefOption_getblflag
 
-	%sort(&inds., &sortvar. &datevar.,tagsort=&tagsort.)
+	%sort(&inds., &sortvar. &additionSort. &datevar.,tagsort=&tagsort.)
+	
+	%if "&ReferenceDate." ^= "RFSTDTC" %then %do;
+		%let MergeSubjectDS = &false.;
+		%let PreffixOfVar = A;
+	%end; %else %let MergeSubjectDS = &true.;
 
 	%if &time. %then %let dateFormat = is8601dt;
 		%else %let dateFormat = is8601da;
 
 	data _getbl_temp;
-		merge &inds.(in = in1)
-			  DM (in = inDM keep = USUBJID RFSTDTC);
-		by USUBJID;
-		if in1*inDM;
+		%if ^&MergeSubjectDS. %then %do; 
+			set &inds.;
+		%end; %else %do;
+				merge &inds.(in = in1)
+					  DM (in = in2 keep = USUBJID RFSTDTC);
+				by USUBJID;
+				if in1*in2;
+			%end;
 			
-		if ^missing(RFSTDTC) and ^missing(&domain.DTC) and ^missing(&resultvar.) then	do;
+		if ^missing(&ReferenceDate.) and ^missing(&dateVar.) and ^missing(&resultVar.) then	do;
 			if index(&datevar.,"T") then do;
 
 				%getBlPreFlag(&datevar.,&dateFormat.,logOper=&operDT.)
@@ -37,22 +49,22 @@
 	data &out.;
 		set _getbl_temp;
 		by &sortvar. pre&domain.BLFL pre&domain.LSTFL;
-		if last.pre&domain.BLFL and pre&domain.BLFL then &domain.BLFL = "Y";
-		if last.pre&domain.LSTFL and pre&domain.LSTFL then &domain.LSTFL = "Y";
+		if last.pre&domain.BLFL and pre&domain.BLFL then &PreffixOfVar.BLFL = "Y";
+		if last.pre&domain.LSTFL and pre&domain.LSTFL then &PreffixOfVar.LSTFL = "Y";
 	run;
 
-%mend getblflag;
+%mend getblflag2;
 
 %macro getBlPreFlag(date,format,logOper=lt);
 	
-	%if %substr(&&format,%length(&&format.),1) ^= . %then %let format = &format..;
-	%local procVar DMVar;
-	%localvars(procVar DMVar)
+	%if %sysfunc(compress(&&format.,.,k)) = %then %let format = &format..;
+	%local procVar RefVar;
+	%localvars(procVar RefVar)
 	
 	&procVar. = input(&date.,&format.);
-	&DMVar. = input(RFSTDTC,&format.);
-	if &procVar. &logOper. &DMVar. then pre&domain.BLFL = 1;
-		else if &procVar. > &DMVar. then pre&domain.LSTFL = 1;
+	&RefVar. = input(&ReferenceDate.,&format.);
+	if &procVar. &logOper. &RefVar. then pre&domain.BLFL = 1;
+		else if &procVar. > &RefVar. then pre&domain.LSTFL = 1;
 
 %mend getBlPreFlag;
 
@@ -75,7 +87,12 @@
 			%else %let operDA = le;
 
 %mend;
-/****ADD missing time
+
+
+/*%substr(&&format,%length(&&format.),1) ^= .*/
+
+/****ADD missing time , old code if need can used
+
 
 
 
