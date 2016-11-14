@@ -2,7 +2,7 @@
 			,breakchars=%str( -/:),startNum=1);  
 	
 	
-*V. 2.4.2mlite;
+*V. 2.4.3mlite;
 %*breaks the text into columns with a fixed length;
 
 	%local i index maxOfCol maxRowLength allVars colCnt;
