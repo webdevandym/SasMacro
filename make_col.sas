@@ -5,7 +5,7 @@
 *V. 2.4.2mlite;
 %*breaks the text into columns with a fixed length;
 
-	%local i index maxOfCol maxRowLength allVars;
+	%local i index maxOfCol maxRowLength allVars colCnt;
 
 	proc sql noprint;
 		select max(length(&varin.)) into:maxRowLength from &ds_name. WHERE &VARIN. IS not NULL;
@@ -40,10 +40,13 @@
 
 %macro genVarList;
 
+	%local index i;
+
 	%if &colCnt. < &defcol. %then %let maxOfCol = &defcol.;
 			%else %let maxOfCol = &colCnt;
 
-	%let allVars = &allVars. &varout;
+	%let allVars = &varout;
+	
 	%do i = 2 %to &maxOfCol;
 
 		%let index = %eval(&i+&startNum-2);
