@@ -1,33 +1,41 @@
-%macro fastCode(vars,del=%str(-),alg=input,informat=,globSep=%str( ),autoDom=)/minoperator;
+%macro fastCode(vars,del=,alg=input,informat=,globSep=%str( ),autoDom=)/minoperator;
 
-	%local word i invar outvar fmt brakets algPart;
+	%local word i invar outvar fmt brakets algPart simpleFmt;
 
+	%let alg = %sysfunc(compress(&alg.));
 	%setDefOption_fastCode
 
 	%*search algorithm for the point of insertion of variables; 
-	%let algPart = %qscan(&alg,1,%str(%)));
-	%if %length (&algPart) < %length(&alg) %then %let brakets = %substr(&alg.,%length(&algPart.)+1);
+	%let algPart = %sysfunc(prxchange(%str(s/(?=[,\%)]).*//),-1,&alg.));
+
+	%if %length(%bquote(&algPart)) < %length(&alg) %then 
+			%let brakets = %substr(&alg.,%length(%bquote(&algPart.))+1);
 		%else %do;
 			%let algPart = &algPart.(;
 			%let brakets =);
 		%end;
-	
+
 	%*received data processing;
 	%do %while(%get_word(&vars, i, word,sep=&globSep.));
 
 		%let outvar = %scan(&word,1,&del.);
 		%let invar = %scan(&word.,2,&del.);
 		%let fmt = %scan(&word,3,&del.);
+		%let simpleFmt = &true.;
 		%if &autoDom. %then %let outvar = &domain.&outvar.;
+		
 
 		%if %index(&alg.,input) or %index(&alg.,put) %then %do;
 
 			%if %bquote(&fmt.) = %then %let fmt = ny.;
 			%if &informat. and ^(%substr(&fmt.,1,1) # ($ ?)) %then %let fmt = $&fmt.;
-			%if %substr(&fmt.,%length(&fmt.)) ^= . and 
-				^("%substr(&fmt.,%length(&fmt.)-2)" # (" -l" " -r" " -c" " -L" " -R" " -C"))
-					%then %let fmt = &fmt..;
+			%*cheack length and last char of fmt;
+			%if %length(&fmt.) > 2 %then 
+				%if ("%substr(&fmt.,%length(&fmt.)-2)" # (" -l" " -r" " -c" " -L" " -R" " -C")) 
+					%then %let simpleFmt = &false.;
 
+			%if %sysfunc(compress(&fmt,.,k)) ^= . and &simpleFmt. %then %let fmt = &fmt..;
+			
 			&outvar = &algPart&invar.,&fmt.&brakets
 
 		%end; %else %if %index(&alg.,none) or %bquote(&alg.) = %then &outvar = &invar.;
@@ -37,6 +45,8 @@
 %mend fastCode;
 
 %macro setDefOption_fastCode;
+
+	%let simpleFmt = &true;
 
 	%*set informat-format option;
 	%if &informat = %then 
@@ -48,7 +58,14 @@
 		%if %symexist(g_fastCode_autoDom) %then %let autoDom = &g_fastCode_autoDom;
 			%else %let autoDom = &false.;
 
+	%*inner delimeter;
+	%if &del = %then 
+		%if %symexist(g_fastCode_del) %then %let del = &g_fastCode_del;
+			%else %let del = %str(-);
+
 %mend;
+
+%*%substr(&fmt.,%length(&fmt.)) ^= .*%
 
 %*v2.4.3 (new algorithm, add comment and FAQ)
 		Author: Andrey
