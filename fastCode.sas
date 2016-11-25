@@ -36,10 +36,10 @@
 
 			%if %sysfunc(compress(&fmt,.,k)) ^= . and &simpleFmt. %then %let fmt = &fmt..;
 			
-			&outvar = &algPart&invar.,&fmt.&brakets
+			&outvar = &algPart.&invar.,&fmt.&brakets.
 
 		%end; %else %if %index(&alg.,none) or %bquote(&alg.) = %then &outvar = &invar.;
-						%else &outvar = &algPart&invar.&brakets;;
+						%else &outvar = &algPart.&invar.&brakets.;;
 	%end;
 
 %mend fastCode;
@@ -64,6 +64,7 @@
 			%else %let del = %str(-);
 
 %mend;
+
 
 %*%substr(&fmt.,%length(&fmt.)) ^= .*%
 
