@@ -31,8 +31,7 @@
 			%if &informat. and ^(%substr(&fmt.,1,1) # ($ ?)) %then %let fmt = $&fmt.;
 			%*cheack length and last char of fmt;
 			%if %length(&fmt.) > 2 %then 
-				%if ("%substr(&fmt.,%length(&fmt.)-2)" # (" -l" " -r" " -c" " -L" " -R" " -C")) 
-					%then %let simpleFmt = &false.;
+				%if %sysfunc(compress(%substr(&fmt.,%length(&fmt.)-1),-lrc,i)) = %then %let simpleFmt = &false.;
 
 			%if %sysfunc(compress(&fmt,.,k)) ^= . and &simpleFmt. %then %let fmt = &fmt..;
 			
@@ -49,22 +48,21 @@
 	%let simpleFmt = &true;
 
 	%*set informat-format option;
-	%if &informat = %then 
+	%if %bquote(&informat) = %then 
 		%if %symexist(g_fastCode_informat) %then %let informat = &g_fastCode_informat;
 			%else %let informat = &true.;
 	
 	%*auto set domain prefix;
-	%if &autoDom = %then 
+	%if %bquote(&autoDom) = %then 
 		%if %symexist(g_fastCode_autoDom) %then %let autoDom = &g_fastCode_autoDom;
 			%else %let autoDom = &false.;
 
 	%*inner delimeter;
-	%if &del = %then 
+	%if %bquote(&del) = %then 
 		%if %symexist(g_fastCode_del) %then %let del = &g_fastCode_del;
 			%else %let del = %str(-);
 
 %mend;
-
 
 %*%substr(&fmt.,%length(&fmt.)) ^= .*%
 
