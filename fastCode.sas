@@ -1,21 +1,22 @@
-%start;
+/*%start;*/
 
 %macro fastCode(vars,del=,alg=input,informat=,globSep=%str( ),autoDom=)/minoperator;
 
-	%local word i invar outvar fmt brakets algPart simpleFmt;
-	
+	%local curOperation i invar outvar fmt brakets algPart simpleFmt;
+	%put &alg.;
 	%setDefOption_fastCode
 
 	%*search algorithm for the point of insertion of variables; 
 	%let algPart = %sysfunc(prxchange(%str(s/(?=[,\%)]).*//),-1,&alg.));
-	%if %length(%sysfunc(compress(%bquote(&algPart),%str(%()))) = %length(%bquote(&alg)) %then %let algPart = &algPart.(; 
-
+	%if %length(%sysfunc(compress(%bquote(&alg),%str(%))))) = %length(%bquote(&algPart)) %then 
+		%if "%substr(%QSYSFUNC(REVERSE(%bquote(&algPart.))),1,1)" ^= "(" %then %let algPart = &algPart.(;
+	%put &algPart.;
 	%*received data processing;
-	%do %while(%get_word(&vars, i, word,sep=&globSep.));
+	%do %while(%get_word(&vars, i, curOperation,sep=&globSep.));
 
-		%let outvar = %scan(&word,1,&del.);
-		%let invar = %scan(&word.,2,&del.);
-		%let fmt = %scan(&word,3,&del.);
+		%let outvar = %scan(&curOperation,1,&del.);
+		%let invar = %scan(&curOperation.,2,&del.);
+		%let fmt = %scan(&curOperation,3,&del.);
 		%let simpleFmt = &true.;
 		%if &autoDom. %then %let outvar = &domain.&outvar.;
 		
@@ -98,13 +99,12 @@
 
 %mend chkPutPositionAndGetFormat;
 
-
+/**/
 /**/
 /*data test;*/
 /**/
 /*	k=146;*/
-/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=put,del=*,globsep=!,informat=0);*/
+/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=strip(put()),del=*,globsep=!,informat=0);*/
 /**/
 /*	l=put(1,best. -r);*/
 /*run;*/
-
