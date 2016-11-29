@@ -1,19 +1,14 @@
+%start;
+
 %macro fastCode(vars,del=,alg=input,informat=,globSep=%str( ),autoDom=)/minoperator;
 
 	%local word i invar outvar fmt brakets algPart simpleFmt;
-
-	%let alg = %sysfunc(compress(&alg.));
+	
 	%setDefOption_fastCode
 
 	%*search algorithm for the point of insertion of variables; 
 	%let algPart = %sysfunc(prxchange(%str(s/(?=[,\%)]).*//),-1,&alg.));
-
-	%if %length(%bquote(&algPart)) < %length(&alg) %then 
-			%let brakets = %substr(&alg.,%length(%bquote(&algPart.))+1);
-		%else %do;
-			%let algPart = &algPart.(;
-			%let brakets =);
-		%end;
+	%if %length(%sysfunc(compress(%bquote(&algPart),%str(%()))) = %length(%bquote(&alg)) %then %let algPart = &algPart.(; 
 
 	%*received data processing;
 	%do %while(%get_word(&vars, i, word,sep=&globSep.));
@@ -28,32 +23,41 @@
 		%if %index(&alg.,input) or %index(&alg.,put) %then %do;
 
 			%if %bquote(&fmt.) = %then %let fmt = ny.;
-			%if &informat. and ^(%substr(&fmt.,1,1) # ($ ?)) %then %let fmt = $&fmt.;
+			%if &informat. %then %do;
+				%if %substr(&fmt.,1,1) = ? and ^%index(&fmt.,$) %then %let fmt = ??$%substr(&fmt.,3);
+				%if ^(%substr(&fmt.,1,1) # ($ ?)) %then %let fmt = $&fmt.;	
+			%end;
+
 			%*cheack length and last char of fmt;
 			%if %length(&fmt.) > 2 %then 
 				%if %sysfunc(compress(%substr(&fmt.,%length(&fmt.)-1),-lrc,i)) = %then %let simpleFmt = &false.;
 
-			%if %sysfunc(compress(&fmt,.,k)) ^= . and &simpleFmt. %then %let fmt = &fmt..;
-			
-			&outvar = &algPart.&invar.,&fmt.&brakets.
+			%if %sysfunc(compress(&fmt,.,k)) ^= . %then
+				%if &simpleFmt. %then %let fmt = &fmt..;
+					%else %let fmt = %sysfunc(compress(%scan(&fmt,1,-))).%str( )-%scan(&fmt,2,-);
 
-		%end; %else %if %index(&alg.,none) or %bquote(&alg.) = %then &outvar = &invar.;
-						%else &outvar = &algPart.&invar.&brakets.;;
+			
+		%end;
+
+		%if %index(&alg.,none) or %bquote(&alg.) = %then &outvar. = &invar.;
+			%else %chkPutPositionAndGetFormat(%bquote(&algPart.),&fmt.,%bquote(&brakets.),&invar.,&outvar.);;
+			
 	%end;
 
 %mend fastCode;
 
 %macro setDefOption_fastCode;
 
+	%if %bquote(&alg.) ^= %then %let alg = %bquote(%sysfunc(compress(&alg.)));
 	%let simpleFmt = &true;
 
 	%*set informat-format option;
-	%if %bquote(&informat) = %then 
+	%if %bquote(&informat.) = %then 
 		%if %symexist(g_fastCode_informat) %then %let informat = &g_fastCode_informat;
 			%else %let informat = &true.;
 	
 	%*auto set domain prefix;
-	%if %bquote(&autoDom) = %then 
+	%if &autoDom. = %then 
 		%if %symexist(g_fastCode_autoDom) %then %let autoDom = &g_fastCode_autoDom;
 			%else %let autoDom = &false.;
 
@@ -64,47 +68,43 @@
 
 %mend;
 
-%*%substr(&fmt.,%length(&fmt.)) ^= .*%
+%macro chkPutPositionAndGetFormat(EXP,format,braketWithParam,inputVariable,outPutVariable)/minoperator;
 
-%*v2.4.3 (new algorithm, add comment and FAQ)
-		Author: Andrey
-	def. call alg option -> <strip> <input> <put> and etc., <strip(input())> <strip(put())> and etc.,
-		<strip(compbl())> and etc..
-	strip(input()) -> strip(input(invar,format))
-	vars -> varOut1-varIn1-Fmt1 -> varOut1 = strip(input(varIn1,Fmt1.))
-	If foramt is empty -> def format = ny. or $ny., depending on the option <informat>
-!brackets must always be paired for the option -> alg.
-Option:
-	1.informat=true -> $ + format -> ny. => $ny.
-	1.1 for the format set point is not necessarily
-	2.globSep -> separator between global variables
-	3.del -> separator betwwen var. => varout varin fmt (if needed);
+	%local curFunc downCounter upperCounter newBrak curAddParam OutPutExp;
+	%let downCounter = %eval(%sysfunc(count(%bquote(&EXP),%str(%())));
+	%let curFunc = %qscan(&EXP, &downCounter.,%str(%());
+	%let braketWithParam = %sysfunc(prxchange(%str(s/\%)/ %)/),-1,%bquote(&braketWithParam.)));
+
+	%let upperCounter = 1;
+
+	%do %while (&downCounter > 0 );
+
+		 %let curAddParam = %scan(%bquote(&braketWithParam.),&upperCounter.,%str(%)));
+
+	 	 %if &curFunc. # (put input) %then %let newBrak =,&format.);
+	  		%else %let newBrak = &curAddParam.);
+
+		  %if &upperCounter = 1 %then %let OutPutExp = &curFunc.(&inputVariable.&newBrak.;
+		  	%else  %let OutPutExp = &curFunc.(&OutPutExp.&newBrak.;
+ 		  
+		  %let upperCounter = %eval(&upperCounter+1);
+		  %let downCounter = %eval(&downCounter-1);
+
+		  %if &downCounter > 0 %then %let curFunc = %scan(&EXP, &downCounter.,%str(%());
+		  
+	%end;
+
+	&outPutVariable. = &OutPutExp.
+
+%mend chkPutPositionAndGetFormat;
 
 
-%*old vers. without multi operators (function);
+/**/
+/*data test;*/
+/**/
+/*	k=146;*/
+/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=put,del=*,globsep=!,informat=0);*/
+/**/
+/*	l=put(1,best. -r);*/
+/*run;*/
 
-/*%macro fastCode(vars,del=%str(-),alg=input,informat=&true.,globSep=%str( ))/minoperator;*/
-/**/
-/*	%local word i invar outvar fmt;*/
-/*	%do %while(%get_word(&vars, i, word,sep=&globSep.));*/
-/**/
-/*		%let outvar = %scan(&word,1,&del.);*/
-/*		%let invar = %scan(&word.,2,&del.);*/
-/*		%let fmt = %scan(&word,3,&del.);*/
-/**/
-/*		%if &alg # (input put) %then %do;*/
-/**/
-/*			%if %bquote(&fmt.) = %then %let fmt = ny.;*/
-/*			%if &informat. and ^(%substr(&fmt.,1,1) # ($ ?)) %then %let fmt = $&fmt.;*/
-/*			%if %substr(&fmt.,%length(&fmt.)) ^= . %then %let fmt = &fmt..;*/
-/**/
-/*			&outvar = &alg(&invar.,&fmt.);*/
-/**/
-/*		%end; %else %if &alg = none %then &outvar = &invar.;*/
-/*						%else &outvar = &alg(&invar.);;*/
-/**/
-/*	%end;*/
-/**/
-/*%mend fastCode;*/
-
-%*v1.2;
