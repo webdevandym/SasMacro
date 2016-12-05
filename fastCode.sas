@@ -1,16 +1,15 @@
-/*%start;*/
+%start;
 
 %macro fastCode(vars,del=,alg=input,informat=,globSep=%str( ),autoDom=)/minoperator;
 
 	%local curOperation i invar outvar fmt brakets algPart simpleFmt;
-	%put &alg.;
+
 	%setDefOption_fastCode
 
 	%*search algorithm for the point of insertion of variables; 
-	%let algPart = %sysfunc(prxchange(%str(s/(?=[,\%)]).*//),-1,&alg.));
-	%if %length(%sysfunc(compress(%bquote(&alg),%str(%))))) = %length(%bquote(&algPart)) %then 
-		%if "%substr(%QSYSFUNC(REVERSE(%bquote(&algPart.))),1,1)" ^= "(" %then %let algPart = &algPart.(;
-	%put &algPart.;
+	%let algPart = %sysfunc(prxchange(%str(s/(?=[,\%)]).*//),-1,%bquote(&alg.)))(;
+	%let algPart = %sysfunc(prxchange(%str(s/\%({2,}/%(/),-1,%bquote(&algPart.)));
+	%let brakets = %sysfunc(prxchange(%str(s/.*\%(//),-1,%bquote(&alg.)));
 	%*received data processing;
 	%do %while(%get_word(&vars, i, curOperation,sep=&globSep.));
 
@@ -75,7 +74,7 @@
 	%let downCounter = %eval(%sysfunc(count(%bquote(&EXP),%str(%())));
 	%let curFunc = %qscan(&EXP, &downCounter.,%str(%());
 	%let braketWithParam = %sysfunc(prxchange(%str(s/\%)/ %)/),-1,%bquote(&braketWithParam.)));
-
+	%put &braketWithParam.;
 	%let upperCounter = 1;
 
 	%do %while (&downCounter > 0 );
@@ -104,7 +103,6 @@
 /*data test;*/
 /**/
 /*	k=146;*/
-/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=strip(put()),del=*,globsep=!,informat=0);*/
+/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=%str(put%(strip%(%(),del=*,globsep=!,informat=0);*/
 /**/
-/*	l=put(1,best. -r);*/
 /*run;*/
