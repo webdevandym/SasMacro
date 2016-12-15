@@ -1,5 +1,3 @@
-%start;
-
 %macro fastCode(vars,del=,alg=input,informat=,globSep=%str( ),autoDom=)/minoperator;
 
 	%local curOperation i invar outvar fmt brakets algPart simpleFmt;
@@ -74,7 +72,6 @@
 	%let downCounter = %eval(%sysfunc(count(%bquote(&EXP),%str(%())));
 	%let curFunc = %qscan(&EXP, &downCounter.,%str(%());
 	%let braketWithParam = %sysfunc(prxchange(%str(s/\%)/ %)/),-1,%bquote(&braketWithParam.)));
-	%put &braketWithParam.;
 	%let upperCounter = 1;
 
 	%do %while (&downCounter > 0 );
@@ -98,11 +95,12 @@
 
 %mend chkPutPositionAndGetFormat;
 
-/**/
-/**/
-/*data test;*/
-/**/
-/*	k=146;*/
-/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=%str(put%(strip%(%(),del=*,globsep=!,informat=0);*/
-/**/
-/*run;*/
+
+/*TEST MOD
+data test;
+
+	k=146;
+	%fastCode(s*k*10 -r!h*k*10. -l,alg=put(strip()),del=*,globsep=!,informat=0);
+
+run;
+*/
