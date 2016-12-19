@@ -7,11 +7,10 @@
 	%*search algorithm for the point of insertion of variables; 
 	%let algPart = %sysfunc(prxchange(%str(s/(?=[,\%)]).*//),-1,%bquote(&alg.)))(;
 	%let algPart = %sysfunc(prxchange(%str(s/\%({2,}/%(/),-1,%bquote(&algPart.)));
-	%let brakets = %sysfunc(prxchange(%str(s/.*\%(|.+//),-1,%bquote(&alg.)));
+	%let brakets = %sysfunc(prxchange(%str(s/.*\%(|\w+//),-1,%bquote(&alg.)));
 
 	%*received data processing;
 	
-	%put &brakets. <<<;
 	%do %while(%get_word(&vars, i, curOperation,sep=&globSep.));
 
 		%let outvar = %scan(&curOperation,1,&del.);
@@ -83,7 +82,7 @@
 
 	 	 %if &curFunc. # (put input) %then %let newBrak =,&format.);
 	  		%else %let newBrak = &curAddParam.);
-		%put &curAddParam. &braketWithParam.;
+		
 		  %if &upperCounter = 1 %then %let OutPutExp = &curFunc.(&inputVariable.&newBrak.;
 		  	%else  %let OutPutExp = &curFunc.(&OutPutExp.&newBrak.;
  		  
@@ -98,11 +97,11 @@
 
 %mend chkPutPositionAndGetFormat;
 
-
-
+/**/
+/**/
 /*data test;*/
 /**/
 /*	k=146;*/
-/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=strip,del=*,globsep=!,informat=0);*/
+/*	%fastCode(s*k*10. -r!h*k*10. -l,alg=strip(),del=*,globsep=!,informat=0);*/
 /**/
 /*run;*/
