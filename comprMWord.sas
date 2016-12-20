@@ -1,5 +1,4 @@
-%macro comprMWord(inPutVariable,compressingChar,useMVar=&false.,oneExp=&true.,sep=%str( )
-				,byteSep=187,minDupSymbol=);
+%macro comprMWord(inPutVariable,compressingChar,sep=%str( ),byteSep=187,minDupSymbol=);
 	
 /*	%put Start: &inPutVariable.;*/
 	
