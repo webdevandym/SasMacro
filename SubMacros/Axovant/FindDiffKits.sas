@@ -1,6 +1,6 @@
 %macro FindDiffKits(inds,outds,key=,compare=,inId=1,repnum=all,path=SAF\prev_&prevSafdate.,maxLen=1000,
 	sortVar=,deleteTemplate=&true.,color=2,specFileName=,algorithm=2,specSubjProfile=&false.,
-	checkNullDS=)/minoperator;
+	checkNullDS=,orderNullColumns=)/minoperator;
 
 %*Initialization global and local macro-vars;
 	%global g_flagVars_FDK g_key_FDK g_compare_FDK g_FileExist_FDK;
@@ -80,6 +80,26 @@
 %*read file and put down in dataset;
 	%read_rtf_table(filename=&list\&path.\&FullName..rtf, repno=&repnum., outds=_qc_FDK,ordercolumns=&ColNum.,
 		max_cell_length=&maxLen.);
+
+%*retain all Key columns, spec fix for same table;
+	%if %bquote(&orderNullColumns.)^= %then %do;
+
+		%if &orderNullColumns.^=nosort %then %sort(_cloned_&inds.,&orderNullColumns.);
+		%local maxColums ColuNumRetainFix;
+
+		%let ColuNumRetainFix = %sysfunc(prxchange(%str(s/\bcol(\d)/$1/),-1,%str(&new_key.)));
+		%let maxColums = %scan(&ColuNumRetainFix.,-1);
+
+		%put &ColuNumRetainFix. >> &maxColums.;
+		data _cloned_&inds.;
+			 length col1-col&maxColums. $1000;
+			 call missing(of col1-col&maxColums.);
+
+			 set _cloned_&inds.;
+			 %retaining_null_col_fix_bug(&ColuNumRetainFix.,&new_key., &maxLen.);
+		run;
+
+	%end;
 
 %*preparation two datasets to merge, with selected algorithm;	
 	%if &specSubjProfile. %then %do;
@@ -175,10 +195,37 @@
 
 	%end;
 
-	%let sortVar = %sysfunc(prxchange(%str(s/\bcol(\d)/sort_col$1/),-1,%str(&sortVar.)));
-	
-	%if %bquote(&sortVar.) ^= and ^&checkNullDS. %then %sort(&outds.,&sortVar.);
+/*	%let sortVar = %sysfunc(prxchange(%str(s/\bcol(\d)/sort_col$1/),-1,%str(&sortVar.)));*/
+/*	*/
+/*	%if %bquote(&sortVar.) ^= and ^&checkNullDS. %then %sort(&outds.,&sortVar.);*/
 
 %end;	
 
 %mend;
+
+
+
+%macro retaining_null_col_fix_bug(ordercolumns, pagevars, max_cell_length);
+
+	%local numordercols lastordercol i num;
+
+	%let lastordercol = %scan(&pagevars, -1);
+		
+      by &pagevars notsorted;
+      array ordercolumns[*] 
+        %do %while(%get_word(&ordercolumns, i, num));
+          col&num
+        %end;;
+      %let numordercols = %eval(&i - 1);
+      array retained[&numordercols] $&max_cell_length _TEMPORARY_;
+      drop i;
+      
+      do i = 1 to &numordercols;
+
+        if ordercolumns[i] ^= '' or (first.&lastordercol. and ordercolumns[i] ^= '') then do;
+          retained[i] = ordercolumns[i];
+        end; else ordercolumns[i] = retained[i];
+
+      end;
+
+%mend retaining_null_col_fix_bug;
