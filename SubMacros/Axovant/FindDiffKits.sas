@@ -84,7 +84,7 @@
 %*retain all Key columns, spec fix for same table;
 	%if %bquote(&orderNullColumns.)^= %then %do;
 
-		%if &orderNullColumns.^=nosort %then %sort(_cloned_&inds.,&orderNullColumns.);
+		%if &orderNullColumns.^= &true. %then %sort(_cloned_&inds.,&orderNullColumns.);
 		%local maxColums ColuNumRetainFix;
 
 		%let ColuNumRetainFix = %sysfunc(prxchange(%str(s/\bcol(\d)/$1/),-1,%str(&new_key.)));
