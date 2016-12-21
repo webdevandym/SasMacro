@@ -90,7 +90,6 @@
 		%let ColuNumRetainFix = %sysfunc(prxchange(%str(s/\bcol(\d)/$1/),-1,%str(&new_key.)));
 		%let maxColums = %scan(&ColuNumRetainFix.,-1);
 
-		%put &ColuNumRetainFix. >> &maxColums.;
 		data _cloned_&inds.;
 			 length col1-col&maxColums. $1000;
 			 call missing(of col1-col&maxColums.);
