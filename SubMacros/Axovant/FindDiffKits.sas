@@ -194,11 +194,14 @@
 
 	%end;
 
+%end;
+
 	%let sortVar = %sysfunc(prxchange(%str(s/\bcol(\d)/sort_col$1/),-1,%str(&sortVar.)));
 	
 	%if %bquote(&sortVar.) ^= and ^&checkNullDS. %then %sort(&outds.,&sortVar.);
-
-%end;	
+	%if %bquote(&orderNullColumns.) ^=  and ^&checkNullDS. and &orderNullColumns.^= &true. %then 
+		%sort(&outds.,&orderNullColumns.);
+	
 
 %mend;
 
