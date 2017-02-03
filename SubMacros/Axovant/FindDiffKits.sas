@@ -1,6 +1,6 @@
 %macro FindDiffKits(inds,outds,key=,compare=,inId=1,repnum=all,path=SAF\prev_&prevSafdate.,maxLen=1000,
 	sortVar=,deleteTemplate=&true.,color=2,specFileName=,algorithm=2,specSubjProfile=&false.,
-	checkNullDS=,orderNullColumns=)/minoperator;
+	checkNullDS=,orderNullColumns=,fix_retain=&false.)/minoperator;
 
 %*Initialization global and local macro-vars;
 	%global g_flagVars_FDK g_key_FDK g_compare_FDK g_FileExist_FDK;
@@ -30,6 +30,7 @@
 	%end; %else %let FullName = &specFileName.;
 	
 	%let g_FileExist_FDK = %SYSFUNC(FILEEXIST(&list\&path.\&FullName..rtf));
+	%put &g_FileExist_FDK.;
 
 %if ^&checkNullDS. and &g_FileExist_FDK. %then %do;
 
@@ -126,10 +127,13 @@
 				by &new_key.;
 
 				if first.col&CountVarsOfKey. then seq=.;
+				%if &fix_retain %then if col6 in ("Total reported MMSE" , "Total derived MMSE")
+					then col5 = "Consciousness";;
 				seq +1;
 			run;
+			%if &fix_retain %then %sort(_qc_FDK, &new_key. &base_compare.);;
 		%end;
-
+	
 	
 %*merge and painting ROW or COL in dataset;
 	data _merged_FDK;
@@ -196,12 +200,13 @@
 
 %end;
 
-	%let sortVar = %sysfunc(prxchange(%str(s/\bcol(\d)/sort_col$1/),-1,%str(&sortVar.)));
 	
-	%if %bquote(&sortVar.) ^= and ^&checkNullDS. %then %sort(&outds.,&sortVar.);
 	%if %bquote(&orderNullColumns.) ^=  and ^&checkNullDS. and &orderNullColumns.^= &true. %then 
 		%sort(&outds.,&orderNullColumns.);
 	
+	%let sortVar = %sysfunc(prxchange(%str(s/\bcol(\d)/sort_col$1/),-1,%str(&sortVar.)));
+	
+	%if %bquote(&sortVar.) ^= and ^&checkNullDS. %then %sort(&outds.,&sortVar.);
 
 %mend;
 
